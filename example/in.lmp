@@ -1,0 +1,18 @@
+# script to get angular rdf of a system
+
+units           metal
+atom_style      atomic
+
+#read_restart min.restart
+
+read_data data.pos
+mass * 1
+#read_restart 800K_20.restart
+
+# A dummy potential with the rcut we want
+pair_style  lj/cut 2.5
+pair_coeff  * * 1.0 1.0 2.5
+
+include ./angular_rdf.lmp
+
+run 0

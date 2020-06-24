@@ -1,0 +1,62 @@
+# Inlcude this file when you want to calculate Angular RDF
+# e.g. include angular_rdf.lmp
+
+# define the values of the variables
+
+# ==============================================================
+# Angular RDF
+# ==============================================================
+variable max_angle equal PI # maximum angle
+variable min_angle equal 0  # minimum angle
+variable nanglebins equal 50  # number of angle bins
+# maximum radius
+variable max_r    equal 10.0  # maximum radius for rdf
+# number of radial bins
+variable nrbins    equal 1000 # number of r bins
+
+# parameters for fix ave/time
+variable Nevery  equal 1
+variable Nrepeat  equal 1
+variable Nfreq  equal 1
+# ==============================================================
+
+# Get the rdf of the system
+# for different types
+#compute RDF all rdf 100 * *
+# for all atoms
+variable dtheta equal ${max_angle}/${nanglebins}
+variable angle_lo equal ${min_angle}
+variable angle_hi equal ${min_angle}+${dtheta}
+
+variable loopindex loop ${nanglebins}
+
+
+neighbor       2.0 bin
+neigh_modify   every 4 delay 0 check yes
+
+
+
+
+
+# =====================================================================================
+# Angular RDF LOOP
+# ====================================================================================
+
+#
+variable comm_cutoff equal  ${max_r}+2  # suppose neighbor skin <= 2.0
+comm_modify cutoff ${comm_cutoff}   # ghost atom commucation radius  should be larger than (max_r + neighbour skin)
+
+label myloop
+compute ${loopindex} all angular_rdf ${nrbins} * * 1 1 1 2 2 2 3 3 cutoff ${max_r} angle ${angle_lo} ${angle_hi}
+fix RDFALL${loopindex} all ave/time ${Nevery} ${Nrepeat} ${Nfreq} c_${loopindex}[*] file rdf_all_${loopindex}.dat mode vector
+
+# update angles
+variable angle_lo equal ${angle_lo}+${dtheta}
+variable angle_hi equal ${angle_hi}+${dtheta}
+
+next loopindex
+jump SELF myloop
+# =====================================================================================
+
+
+
